@@ -1,0 +1,53 @@
+import requests
+from bs4 import BeautifulSoup
+
+web = requests.get("")
+web_content = web.content
+
+soup = BeautifulSoup(web_content, "html.parser")
+
+content_list = []
+for element in soup.find_all(['p', 'h1', 'h2', 'h3', 'article', 'main', 'h4', 'h5', 'h6', 'a', 'div']):
+    content_list.append(element.get_text())
+
+content_text = "\n".join(content_list)
+cleaned_phrase = re.sub(r'\n+', ' ', content_text).strip()
+
+meta_tags = []
+for meta in soup.find_all('meta'):
+    meta_info = {attr: meta[attr] for attr in meta.attrs}
+    meta_tags.append(meta_info)
+
+meta_text_form = "\n".join([f"{key} {value}" for item in meta_tags for key, value in item.items()])
+print("Cleaned Content:")
+print(cleaned_phrase)
+print("\nMeta Tags:")
+print(meta_text_form)
+
+#BOT>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>...................................................................................................................................
+
+from transformers import pipeline, AutoModelForQuestionAnswering, AutoTokenizer
+
+# Use a more powerful model
+model_name = "deepset/roberta-large-squad2"
+model = AutoModelForQuestionAnswering.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
+
+def answer_question(context, question):
+    result = qa_pipeline({
+        'context': context,
+        'question': question
+    })
+    return result['answer']
+
+context = meta_text_form
+
+questions = [
+    ""
+]
+
+for question in questions:
+    print(f"Question: {question}")
+    print(f"Answer: {answer_question(context, question)}")
+    print()

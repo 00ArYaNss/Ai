@@ -1,0 +1,317 @@
+#ZOOM IN AND ZOOM OUT EFFECT 
+
+import cv2
+import numpy as np
+import os
+
+def create_video_from_image(image_path, video_path, duration=10, fps=60):
+    # Read the input image
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)  # Load image with alpha channel if present
+    
+    # Check if the image was successfully loaded
+    if image is None:
+        print(f"Error: Could not load image from {image_path}")
+ 
+    # Get the dimensions of the image
+    height, width, _ = image.shape
+    
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # You can use 'XVID' or other codecs
+    out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
+    
+    # Calculate the total number of frames
+    total_frames = int(duration * fps)
+    
+    # Divide the frames for zooming in and zooming out
+    half_frames = total_frames // 2
+    
+    # Define the zoom range
+    start_zoom = 1.0
+    mid_zoom = 1.5  # Zoom in target
+    end_zoom = 1.0  # Zoom out to original
+    
+    for frame_num in range(total_frames):
+        if frame_num < half_frames:
+            # Zoom in
+            zoom_factor = start_zoom + (mid_zoom - start_zoom) * (frame_num / half_frames)
+        else:
+            # Zoom out
+            zoom_factor = mid_zoom - (mid_zoom - end_zoom) * ((frame_num - half_frames) / half_frames)
+        
+        # Calculate the center of the image
+        center_x, center_y = width // 2, height // 2
+        
+        # Calculate the new dimensions of the region of interest (ROI)
+        new_width = int(width / zoom_factor)
+        new_height = int(height / zoom_factor)
+        
+        # Calculate the top-left corner of the ROI
+        top_left_x = center_x - new_width // 2
+        top_left_y = center_y - new_height // 2
+        
+        # Ensure the ROI does not exceed image boundaries
+        top_left_x = max(0, top_left_x)
+        top_left_y = max(0, top_left_y)
+        new_width = min(new_width, width - top_left_x)
+        new_height = min(new_height, height - top_left_y)
+        
+        # Extract the ROI and resize it to the original image size
+        roi = image[top_left_y:top_left_y + new_height, top_left_x:top_left_x + new_width]
+        zoomed_image = cv2.resize(roi, (width, height))
+        
+        # Write the zoomed image as a frame in the video
+        out.write(zoomed_image)
+    
+    # Release everything when done
+    out.release()
+    cv2.destroyAllWindows()
+    
+    print(f"Video saved at {video_path}")
+
+# Example usage with error checking for file existence
+image_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\cat.jpg'
+video_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\output_video.mp4'
+
+if not os.path.isfile(image_path):
+    print(f"Error: File {image_path} does not exist.")
+else:
+    create_video_from_image(image_path, video_path, duration=10, fps=60)
+
+
+                                    #############   PANNING  ##############
+import cv2
+import numpy as np
+import os
+
+def create_video_with_pan(image_path, video_path, duration=10, fps=60):
+    # Read the input image
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    
+    # Check if the image was successfully loaded
+    if image is None:
+        print(f"Error: Could not load image from {image_path}")
+        return
+    
+    # Handle images with alpha channel
+    if image.shape[2] == 4:
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+    
+    # Get the dimensions of the image
+    height, width, _ = image.shape
+    
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
+    
+    # Calculate the total number of frames
+    total_frames = int(duration * fps)
+    
+    # Panning parameters
+    pan_start = 0
+    pan_end = width - width // 2
+    
+    for frame_num in range(total_frames):
+        # Calculate the current pan position
+        pan_factor = pan_start + (pan_end - pan_start) * (frame_num / total_frames)
+        pan_factor = int(pan_factor)
+        
+        # Ensure the pan position does not exceed image boundaries
+        pan_factor = min(max(pan_factor, 0), width // 2)
+        
+        # Calculate the region of interest (ROI) for panning
+        roi = image[:, pan_factor:pan_factor + width // 2]
+        
+        # Resize the ROI to the original image size
+        panned_image = cv2.resize(roi, (width, height))
+        
+        # Write the panned image as a frame in the video
+        out.write(panned_image)
+    
+    # Release everything when done
+    out.release()
+    cv2.destroyAllWindows()
+    
+    print(f"Video saved at {video_path}")
+
+# Example usage with error checking for file existence
+image_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\cat.jpg'
+video_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\output_video_pan.mp4'
+
+if not os.path.isfile(image_path):
+    print(f"Error: File {image_path} does not exist.")
+else:
+    create_video_with_pan(image_path, video_path, duration=10, fps=60)
+
+
+
+
+                                    #############   ROTATION  ##############
+
+import cv2
+import numpy as np
+import os
+
+def create_video_with_rotation(image_path, video_path, duration=10, fps=60):
+    # Read the input image
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    
+    # Check if the image was successfully loaded
+    if image is None:
+        print(f"Error: Could not load image from {image_path}")
+        return
+    
+    # Handle images with alpha channel
+    if image.shape[2] == 4:
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+    
+    # Get the dimensions of the image
+    height, width, _ = image.shape
+    
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # You can use 'XVID' or other codecs
+    out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
+    
+    # Calculate the total number of frames
+    total_frames = int(duration * fps)
+    
+    # Define the rotation parameters
+    center = (width // 2, height // 2)
+    start_angle = 0
+    end_angle = 360
+    
+    for frame_num in range(total_frames):
+        # Calculate the current rotation angle
+        angle = start_angle + (end_angle - start_angle) * (frame_num / total_frames)
+        
+        # Create the rotation matrix
+        M = cv2.getRotationMatrix2D(center, angle, 1)
+        
+        # Rotate the image
+        rotated_image = cv2.warpAffine(image, M, (width, height))
+        
+        # Write the rotated image as a frame in the video
+        out.write(rotated_image)
+    
+    # Release everything when done
+    out.release()
+    cv2.destroyAllWindows()
+    
+    print(f"Video saved at {video_path}")
+
+# Example usage with error checking for file existence
+image_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\cat.jpg'
+video_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\output_video_rotation.mp4'
+
+if not os.path.isfile(image_path):
+    print(f"Error: File {image_path} does not exist.")
+else:
+    create_video_with_rotation(image_path, video_path, duration=10, fps=60)
+
+
+
+
+                                    #############   COMBINED EFFECT  ##############
+
+    
+import cv2
+import numpy as np
+import os
+
+def create_video_with_combined_effects(image_path, video_path, duration=10, fps=60):
+    # Read the input image
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    
+    # Check if the image was successfully loaded
+    if image is None:
+        print(f"Error: Could not load image from {image_path}")
+        return
+    
+    # Handle images with alpha channel
+    if image.shape[2] == 4:
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+    
+    # Get the dimensions of the image
+    height, width, _ = image.shape
+    
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # You can use 'XVID' or other codecs
+    out = cv2.VideoWriter(video_path, fourcc, fps, (width, height))
+    
+    # Calculate the total number of frames
+    total_frames = int(duration * fps)
+    
+    # Define the zoom range
+    start_zoom = 1.0
+    mid_zoom = 1.2
+    end_zoom = 1.0
+    
+    # Define the rotation parameters
+    center = (width // 2, height // 2)
+    start_angle = 0
+    end_angle = 360
+    
+    # Panning parameters
+    pan_start = 0
+    pan_end = width // 2  # Horizontal panning over half the width of the image
+    
+    for frame_num in range(total_frames):
+        # Calculate the current zoom factor
+        if frame_num < total_frames // 2:
+            zoom_factor = start_zoom + (mid_zoom - start_zoom) * (frame_num / (total_frames // 2))
+        else:
+            zoom_factor = mid_zoom - (mid_zoom - end_zoom) * ((frame_num - total_frames // 2) / (total_frames // 2))
+        
+        # Calculate the current rotation angle
+        angle = start_angle + (end_angle - start_angle) * (frame_num / total_frames)
+        
+        # Calculate the current pan position
+        pan_factor = pan_start + (pan_end - pan_start) * (frame_num / total_frames)
+        pan_factor = int(pan_factor)
+        
+        # Ensure the pan position does not exceed image boundaries
+        pan_factor = min(max(pan_factor, 0), width // 2)
+        
+        # Calculate the center of the image
+        center_x, center_y = width // 2, height // 2
+        
+        # Calculate the new dimensions of the region of interest (ROI)
+        new_width = int(width / zoom_factor)
+        new_height = int(height / zoom_factor)
+        
+        # Calculate the top-left corner of the ROI
+        top_left_x = center_x - new_width // 2 + pan_factor
+        top_left_y = center_y - new_height // 2
+        
+        # Ensure the ROI does not exceed image boundaries
+        top_left_x = max(0, top_left_x)
+        top_left_y = max(0, top_left_y)
+        new_width = min(new_width, width - top_left_x)
+        new_height = min(new_height, height - top_left_y)
+        
+        # Extract the ROI and resize it to the original image size
+        roi = image[top_left_y:top_left_y + new_height, top_left_x:top_left_x + new_width]
+        zoomed_image = cv2.resize(roi, (width, height))
+        
+        # Create the rotation matrix
+        M = cv2.getRotationMatrix2D(center, angle, 1)
+        
+        # Rotate the image
+        final_image = cv2.warpAffine(zoomed_image, M, (width, height))
+        
+        # Write the final image as a frame in the video
+        out.write(final_image)
+    
+    # Release everything when done
+    out.release()
+    cv2.destroyAllWindows()
+    
+    print(f"Video saved at {video_path}")
+
+# Example usage with error checking for file existence
+image_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\cat.jpg'
+video_path = r'C:\Users\sahua\OneDrive\Desktop\Pics\output_video_combined.mp4'
+
+if not os.path.isfile(image_path):
+    print(f"Error: File {image_path} does not exist.")
+else:
+    create_video_with_combined_effects(image_path, video_path, duration=10, fps=60)
+
